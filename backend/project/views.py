@@ -2,9 +2,10 @@
 from distutils.command.sdist import sdist
 from urllib import request
 from django.test import tag
-import json
 from django.http import JsonResponse
 from django.core.serializers import serialize
+import json
+from django.core.serializers.json import DjangoJSONEncoder
 
 from pytz import timezone
 from  .models import Blog, Tag, Applied
@@ -84,13 +85,18 @@ class BlogDetail(APIView):
         print('request.data      ', request.data)
         if serializer.is_valid():
             
-            #만일 태그 이름이 같은 데이터가 존재하면 데이터와 함께 홈으로 보내버린다.
+            #만일 태그 이름이 같은 데이터가 존재하면 데이터를 보내준다.
             key=serializer.validated_data['tag']
             if Tag.objects.filter(tag=key):
 
-                exist_tag=Tag.objects.filter(tag=key)[0]
+                queryset=Tag.objects.filter(tag=key).values()
+                queryset.blog=pk
+                print("               !!!!!!!",list(queryset))
+                serialized_q = json.dumps(list(queryset), cls=DjangoJSONEncoder)
+                print(serialized_q)
 
-                return render(request, "tag.html",{'tag':exist_tag})
+                # return render(request, "tag.html",{'tag':queryset})
+                return JsonResponse(serialized_q,safe=False)
 
             serializer.save()
 

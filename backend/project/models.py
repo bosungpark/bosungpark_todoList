@@ -30,7 +30,8 @@ class Tag(models.Model):#태그
     id= models.AutoField(primary_key=True, null=False, blank=False)
     user= models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
 
-    blog= models.ForeignKey(Blog, null=False, blank=False, on_delete=models.CASCADE)#매칭될 게시글의 pk
+    # blog= models.ForeignKey(Blog, null=False, blank=False, on_delete=models.CASCADE)#매칭될 게시글의 pk
+    blog=models.CharField(max_length=100)
     tag= models.TextField()#태그 이름
 
     text_color=models.CharField(max_length=100, default=Tag_TextColors[i])#글자 색
