@@ -36,6 +36,8 @@ class Tag(models.Model):#태그
 
     text_color=models.CharField(max_length=100, default=Tag_TextColors[i])#글자 색
     background_color=models.CharField(max_length=100, default=Tag_BackgroundColors[j])#배경색
+
+    deleted=models.BooleanField(default=False)
     
     def __str__(self):
         return self.tag

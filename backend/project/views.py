@@ -30,8 +30,10 @@ from django.utils import timezone
 
 from django.shortcuts import get_object_or_404, render
 
+from rest_framework.pagination import LimitOffsetPagination
 
-class BlogList(APIView):
+
+class BlogList(APIView, LimitOffsetPagination):
 
     authentication_classes=[BasicAuthentication,SessionAuthentication]
     permission_classes=[IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
@@ -40,7 +42,8 @@ class BlogList(APIView):
     def get(self, request):
         blogs=Blog.objects.all()
 
-        serializer= BlogSerializer(blogs, many=True)
+        results = self.paginate_queryset(blogs, request, view=self)
+        serializer= BlogSerializer(results, many=True)
         return Response(serializer.data)
         # return render(request, "home.html")
     # edit
@@ -91,13 +94,12 @@ class BlogDetail(APIView):
 
                 queryset=Tag.objects.filter(tag=key).values()
                 queryset.blog=pk
-                print("               !!!!!!!",list(queryset))
+                # print("               !!!!!!!",list(queryset))
                 serialized_q = json.dumps(list(queryset), cls=DjangoJSONEncoder)
-                print(serialized_q)
+                # print(serialized_q)
 
                 # return render(request, "tag.html",{'tag':queryset})
                 return JsonResponse(serialized_q,safe=False)
-
             serializer.save()
 
             # 태그 등록시 등록된 태그 데이터베이스에 등록. unique 옵션을 주지 않았으므로, 객체마다 등록되고 삭제시 하나씩 삭제 가능
@@ -140,10 +142,12 @@ class TagDetail(APIView):
         serializer= TagSerializer(tag)
         return Response(serializer.data)
 
-    def put(self, request, pk, format=None):#태그 부분 삭제는 put을 통해 이후 프론트 단에서 구현(ex. if 삭제버튼 클릭: tag.blog=-1, applied.delete())
+    def put(self, request, pk, format=None):#개별 태그 부분 삭제는 put을 통해 연결을 끊는 방향으로 이후 구현, 모델에 삭제 여부 추가(ex. if 삭제버튼 클릭: tag.blog=-1, tag.name="dfajldsaljdsal;fdjjldsskdjdsl" applied.delete())
         tag=self.get_object(pk)
         serializer= TagSerializer(tag, data=request.data)
         if serializer.is_valid():
+            if tag.deleted==True:
+                tag.blog=-1
             serializer.save()
     
             return Response(serializer.data)
